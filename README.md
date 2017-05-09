@@ -1,0 +1,2 @@
+# dwmst
+Statusbar for dwm.
