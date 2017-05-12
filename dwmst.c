@@ -15,12 +15,20 @@
 static const char *uptime()
 {
     static char buf[10];
-    struct sysinfo info;
-    float h;
+    static int c = 0;
 
-    sysinfo(&info);
-    h = info.uptime / 3600.;
-    snprintf(buf, 10, "%c%.1fh", h > 8 ? RED : WHITE, h);
+    /* Get uptime only all x seconds. */
+    if (--c <= 0) {
+        float h;
+        struct sysinfo info;
+
+        sysinfo(&info);
+        h = info.uptime / 3600.;
+        /* Round to quoarters or an hour. */
+        snprintf(buf, 10, "%c%.1fh", h > 8 ? RED : WHITE, h);
+        /* Do uptime check only all x runs. */
+        c = 60;
+    }
 
     return buf;
 }
