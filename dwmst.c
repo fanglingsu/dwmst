@@ -72,22 +72,27 @@ static const char *cpuusage()
     long double b[4];
     float loadavg;
     FILE *fp;
+    static int c = 0;
 
 	if ((fp = fopen("/proc/stat","r")) == NULL) {
 		return buf;
 	}
-	fscanf(fp,"%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
-	fclose(fp);
+    if (--c <= 0) {
+        fscanf(fp,"%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
+        fclose(fp);
 
-	loadavg = ((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2]))
-            / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]));
+        loadavg = ((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2]))
+                / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]));
 
-	snprintf(buf, sizeof(buf), "%.1f%%", loadavg * 100.);
+        snprintf(buf, sizeof(buf), "%.1f%%", loadavg * 100.);
 
-    a[0] = b[0];
-    a[1] = b[1];
-    a[2] = b[2];
-    a[3] = b[3];
+        a[0] = b[0];
+        a[1] = b[1];
+        a[2] = b[2];
+        a[3] = b[3];
+        /* Calculate usage for a 3 seconds delay. */
+        c = 3;
+    }
 
     return buf;
 }
