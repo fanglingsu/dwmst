@@ -2,9 +2,23 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/sysinfo.h>
 #include <time.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
+
+static const char *uptime()
+{
+    static char buf[10];
+    struct sysinfo info;
+    float h;
+
+    sysinfo(&info);
+    h = info.uptime / 3600.;
+    snprintf(buf, 10, "%c%.1fh", h > 8 ? '\03' : '\02', h);
+
+    return buf;
+}
 
 static int volume(void)
 {
@@ -70,10 +84,10 @@ static const char *loadavg(void)
 
 static const char *date_time(void)
 {
-    static char buf[13];
+    static char buf[14];
     time_t now = time(0);
 
-    strftime(buf, 13, "%d.%m. %R", localtime(&now));
+    strftime(buf, 14, "\04%d.%m. %R", localtime(&now));
 
     return buf;
 }
@@ -114,8 +128,8 @@ int main(void)
 
     while (1) {
         snprintf(status, len,
-                "\02♡%s \01±\02%c \01♫\02%d%% \04%s",
-                loadavg(), battery_status(), volume(), date_time());
+                "%s \02♡%s \01±\02%c \01♫\02%d%% %s",
+                uptime(), loadavg(), battery_status(), volume(), date_time());
 
         XStoreName(display, root, status);
         XSync(display, 0);
