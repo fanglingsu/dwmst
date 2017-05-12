@@ -7,6 +7,11 @@
 #include <unistd.h>
 #include <X11/Xlib.h>
 
+#define GREY  '\01'
+#define WHITE '\02'
+#define RED   '\03'
+#define BLUE  '\04'
+
 static const char *uptime()
 {
     static char buf[10];
@@ -15,7 +20,7 @@ static const char *uptime()
 
     sysinfo(&info);
     h = info.uptime / 3600.;
-    snprintf(buf, 10, "%c%.1fh", h > 8 ? '\03' : '\02', h);
+    snprintf(buf, 10, "%c%.1fh", h > 8 ? RED : WHITE, h);
 
     return buf;
 }
@@ -76,7 +81,7 @@ static const char *loadavg(void)
     if (getloadavg(avgs, 1) < 0) {
         buf[0] = '\0';
     } else {
-        snprintf(buf, 10, "%.2f", avgs[0]);
+        snprintf(buf, 10, "%c%.2f", WHITE, avgs[0]);
     }
 
     return buf;
@@ -84,10 +89,11 @@ static const char *loadavg(void)
 
 static const char *date_time(void)
 {
-    static char buf[14];
+    static char buf[14], date[13];
     time_t now = time(0);
 
-    strftime(buf, 14, "\04%d.%m. %R", localtime(&now));
+    strftime(date, 13, "%d.%m. %R", localtime(&now));
+    snprintf(buf, 14, "%c%s", BLUE, date);
 
     return buf;
 }
@@ -128,8 +134,12 @@ int main(void)
 
     while (1) {
         snprintf(status, len,
-                "%s \02♡%s \01±\02%c \01♫\02%d%% %s",
-                uptime(), loadavg(), battery_status(), volume(), date_time());
+                "%s %c♡%s %c±%c%c %c♫%c%d%% %s",
+                uptime(),
+                WHITE, loadavg(),
+                GREY, WHITE, battery_status(),
+                GREY, WHITE, volume(),
+                date_time());
 
         XStoreName(display, root, status);
         XSync(display, 0);
