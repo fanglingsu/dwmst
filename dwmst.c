@@ -16,6 +16,55 @@
 #define RED   '\03'
 #define BLUE  '\04'
 
+static const char *battery(void)
+{
+    static char buf[6], col = '\02';
+    static float percent;
+    static int c = 0;
+    char st = 'U', s = '?';
+    FILE *fp;
+
+    if (--c <= 0) {
+        int enow = 0, efull = 0;
+
+        if ((fp = fopen(BATT_NOW, "r"))) {
+            fscanf(fp, "%d", &enow);
+            fclose(fp);
+        }
+        if ((fp = fopen(BATT_FULL, "r"))) {
+            fscanf(fp, "%d", &efull);
+            fclose(fp);
+        }
+
+        percent = 100 * ((float)enow / efull);
+        /* Determine the color of the percent value. */
+        if (percent >= 70.) {
+            col = '\05';
+        } else if (percent <= 10) {
+            col = '\03';
+        }
+        /* Do this only every 60th call. */
+        c = 60;
+    }
+
+    if ((fp = fopen(BATT_STATUS, "r"))) {
+        st = fgetc(fp);
+        fclose(fp);
+
+        /* Translate the first char of the status into +- or ? */
+        if ('D' == st) {
+            s = '-';
+        } else if ('C' == st) {
+            s = '+';
+        } else if ('F' == st) {
+            s = '=';
+        }
+    }
+
+    snprintf(buf, sizeof(buf), "%c%c%.0f%%", s, col, percent);
+    return buf;
+}
+
 static const char *cpuusage()
 {
     static char buf[7] = {0};
@@ -39,6 +88,31 @@ static const char *cpuusage()
     a[1] = b[1];
     a[2] = b[2];
     a[3] = b[3];
+
+    return buf;
+}
+
+static const char *date_time(void)
+{
+    static char buf[14], date[13];
+    time_t now = time(0);
+
+    strftime(date, 13, "%d.%m. %R", localtime(&now));
+    snprintf(buf, 14, "%c%s", BLUE, date);
+
+    return buf;
+}
+
+static const char *loadavg(void)
+{
+    static char buf[10];
+    double avgs[1];
+
+    if (getloadavg(avgs, 1) < 0) {
+        buf[0] = '\0';
+    } else {
+        snprintf(buf, 10, "%c%.2f", WHITE, avgs[0]);
+    }
 
     return buf;
 }
@@ -110,80 +184,6 @@ static int volume(void)
         snd_mixer_close(handle);
     }
     return volume;
-}
-
-static const char *loadavg(void)
-{
-    static char buf[10];
-    double avgs[1];
-
-    if (getloadavg(avgs, 1) < 0) {
-        buf[0] = '\0';
-    } else {
-        snprintf(buf, 10, "%c%.2f", WHITE, avgs[0]);
-    }
-
-    return buf;
-}
-
-static const char *date_time(void)
-{
-    static char buf[14], date[13];
-    time_t now = time(0);
-
-    strftime(date, 13, "%d.%m. %R", localtime(&now));
-    snprintf(buf, 14, "%c%s", BLUE, date);
-
-    return buf;
-}
-
-static const char *battery(void)
-{
-    static char buf[6], col = '\02';
-    static float percent;
-    static int c = 0;
-    char st = 'U', s = '?';
-    FILE *fp;
-
-    if (--c <= 0) {
-        int enow = 0, efull = 0;
-
-        if ((fp = fopen(BATT_NOW, "r"))) {
-            fscanf(fp, "%d", &enow);
-            fclose(fp);
-        }
-        if ((fp = fopen(BATT_FULL, "r"))) {
-            fscanf(fp, "%d", &efull);
-            fclose(fp);
-        }
-
-        percent = 100 * ((float)enow / efull);
-        /* Determine the color of the percent value. */
-        if (percent >= 70.) {
-            col = '\05';
-        } else if (percent <= 10) {
-            col = '\03';
-        }
-        /* Do this only every 60th call. */
-        c = 60;
-    }
-
-    if ((fp = fopen(BATT_STATUS, "r"))) {
-        st = fgetc(fp);
-        fclose(fp);
-
-        /* Translate the first char of the status into +- or ? */
-        if ('D' == st) {
-            s = '-';
-        } else if ('C' == st) {
-            s = '+';
-        } else if ('F' == st) {
-            s = '=';
-        }
-    }
-
-    snprintf(buf, sizeof(buf), "%c%c%.0f%%", s, col, percent);
-    return buf;
 }
 
 int main(void)
