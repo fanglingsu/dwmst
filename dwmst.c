@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <X11/Xlib.h>
 
+#define BATT_NOW    "/sys/class/power_supply/BAT0/energy_now"
+#define BATT_FULL   "/sys/class/power_supply/BAT0/energy_full"
+#define BATT_STATUS "/sys/class/power_supply/BAT0/status"
+
 #define GREY  '\01'
 #define WHITE '\02'
 #define RED   '\03'
@@ -106,19 +110,53 @@ static const char *date_time(void)
     return buf;
 }
 
-char battery_status(void)
+static const char *battery(void)
 {
-    FILE *bs;
-    char st;
+    static char buf[6], col = '\02';
+    static float percent;
+    static int c = 0;
+    char st = 'U', s = '?';
+    FILE *fp;
 
-    if ((bs = fopen("/sys/class/power_supply/BAT0/status", "r")) == NULL) {
-        return 'U';
+    if (--c <= 0) {
+        int enow = 0, efull = 0;
+
+        if ((fp = fopen(BATT_NOW, "r"))) {
+            fscanf(fp, "%d", &enow);
+            fclose(fp);
+        }
+        if ((fp = fopen(BATT_FULL, "r"))) {
+            fscanf(fp, "%d", &efull);
+            fclose(fp);
+        }
+
+        percent = 100 * ((float)enow / efull);
+        /* Determine the color of the percent value. */
+        if (percent >= 70.) {
+            col = '\05';
+        } else if (percent <= 10) {
+            col = '\03';
+        }
+        /* Do this only every 60th call. */
+        c = 60;
     }
 
-    st = fgetc(bs);
-    fclose(bs);
+    if ((fp = fopen(BATT_STATUS, "r"))) {
+        st = fgetc(fp);
+        fclose(fp);
 
-    return tolower(st);
+        /* Translate the first char of the status into +- or ? */
+        if ('D' == st) {
+            s = '-';
+        } else if ('C' == st) {
+            s = '+';
+        } else if ('F' == st) {
+            s = '=';
+        }
+    }
+
+    snprintf(buf, sizeof(buf), "%c%c%.0f%%", s, col, percent);
+    return buf;
 }
 
 int main(void)
@@ -142,10 +180,10 @@ int main(void)
 
     while (1) {
         snprintf(status, len,
-                "%s %c♡%s %c±%c%c %c♫%c%d%% %s",
+                "%s %c♡%s %c±%c%s %c♫%c%d%% %s",
                 uptime(),
                 WHITE, loadavg(),
-                GREY, WHITE, battery_status(),
+                GREY, WHITE, battery(),
                 GREY, WHITE, volume(),
                 date_time());
 
