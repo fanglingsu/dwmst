@@ -16,6 +16,33 @@
 #define RED   '\03'
 #define BLUE  '\04'
 
+static const char *cpuusage()
+{
+    static char buf[7] = {0};
+    static long double a[4];
+    long double b[4];
+    float loadavg;
+    FILE *fp;
+
+	if ((fp = fopen("/proc/stat","r")) == NULL) {
+		return buf;
+	}
+	fscanf(fp,"%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
+	fclose(fp);
+
+	loadavg = ((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2]))
+            / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]));
+
+	snprintf(buf, sizeof(buf), "%.1f%%", loadavg * 100.);
+
+    a[0] = b[0];
+    a[1] = b[1];
+    a[2] = b[2];
+    a[3] = b[3];
+
+    return buf;
+}
+
 static const char *uptime()
 {
     static char buf[10];
@@ -180,8 +207,9 @@ int main(void)
 
     while (1) {
         snprintf(status, len,
-                "%s %c♡%s %c±%c%s %c♫%c%d%% %s",
+                "%s %cC%c%s %c♡%s %c±%c%s %c♫%c%d%% %s",
                 uptime(),
+                GREY, WHITE, cpuusage(),
                 WHITE, loadavg(),
                 GREY, WHITE, battery(),
                 GREY, WHITE, volume(),
