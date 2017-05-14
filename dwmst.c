@@ -68,8 +68,8 @@ static const char *battery(void)
 static const char *cpuusage()
 {
     static char buf[7] = {0};
-    static long double a[4];
-    long double b[4];
+    static long double work_save, total_save;
+    long double a[8], work, total;
     float loadavg;
     FILE *fp;
     static int c = 0;
@@ -78,18 +78,18 @@ static const char *cpuusage()
 		return buf;
 	}
     if (--c <= 0) {
-        fscanf(fp,"%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
+        fscanf(fp,"%*s %Lf %Lf %Lf %Lf %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3], &a[4], &a[5], &a[6], &a[7]);
         fclose(fp);
 
-        loadavg = ((b[0] + b[1] + b[2]) - (a[0] + a[1] + a[2]))
-                / ((b[0] + b[1] + b[2] + b[3]) - (a[0] + a[1] + a[2] + a[3]));
+        /* summarize all but idle a[3] and waiting a[4] */
+        work    = a[0] + a[1] + a[2] + a[5] + a[6] + a[7];
+        total   = work + a[3] + a[4];
+        loadavg = (work - work_save) / (total - total_save);
 
         snprintf(buf, sizeof(buf), "%.1f%%", loadavg * 100.);
 
-        a[0] = b[0];
-        a[1] = b[1];
-        a[2] = b[2];
-        a[3] = b[3];
+        work_save  = work;
+        total_save = total;
         /* Calculate usage for a 3 seconds delay. */
         c = 3;
     }
