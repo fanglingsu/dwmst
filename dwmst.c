@@ -96,7 +96,8 @@ static const char *cpuusage()
 
 static const char *date_time(void)
 {
-    static char buf[14], date[13];
+    static char buf[14];
+    char date[13];
     time_t now = time(0);
 
     strftime(date, sizeof(date), "%d.%m. %R", localtime(&now));
