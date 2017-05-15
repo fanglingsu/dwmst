@@ -99,8 +99,8 @@ static const char *date_time(void)
     static char buf[14], date[13];
     time_t now = time(0);
 
-    strftime(date, 13, "%d.%m. %R", localtime(&now));
-    snprintf(buf, 14, "%c%s", BLUE, date);
+    strftime(date, sizeof(date), "%d.%m. %R", localtime(&now));
+    snprintf(buf, sizeof(buf), "%c%s", BLUE, date);
 
     return buf;
 }
@@ -113,7 +113,7 @@ static const char *loadavg(void)
     if (getloadavg(avgs, 1) < 0) {
         buf[0] = '\0';
     } else {
-        snprintf(buf, 10, "%c%.2f", WHITE, avgs[0]);
+        snprintf(buf, sizeof(buf), "%c%.2f", WHITE, avgs[0]);
     }
 
     return buf;
@@ -132,7 +132,7 @@ static const char *uptime()
         sysinfo(&info);
         h = info.uptime / 3600.;
         /* Round to quoarters or an hour. */
-        snprintf(buf, 10, "%c%.1fh", h > 8 ? RED : WHITE, h);
+        snprintf(buf, sizeof(buf), "%c%.1fh", h > 8 ? RED : WHITE, h);
         /* Do uptime check only all x runs. */
         c = 60;
     }
@@ -202,7 +202,7 @@ int main(void)
     }
     root = DefaultRootWindow(display);
 
-    if ((status = malloc(len)) == NULL) {
+    if ((status = malloc(sizeof(char) * len)) == NULL) {
         fprintf(stderr, "Cannot allocate memory.\n");
         return 1;
     }
