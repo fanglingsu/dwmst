@@ -74,9 +74,9 @@ static const char *cpuusage()
     FILE *fp;
     static int c = 0;
 
-	if ((fp = fopen("/proc/stat","r")) == NULL) {
-		return buf;
-	}
+    if ((fp = fopen("/proc/stat","r")) == NULL) {
+        return buf;
+    }
     if (--c <= 0) {
         fscanf(fp,"%*s %Lf %Lf %Lf %Lf %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3], &a[4], &a[5], &a[6], &a[7]);
         fclose(fp);
