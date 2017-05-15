@@ -21,11 +21,11 @@ static const char *battery(void)
     static char buf[6], col = '\02';
     static float percent;
     static int c = 0;
-    char st = 'U', s = '?';
+    char st, s = '?';
     FILE *fp;
 
     if (--c <= 0) {
-        int enow = 0, efull = 0;
+        int enow = 1, efull = 1;
 
         if ((fp = fopen(BATT_NOW, "r"))) {
             fscanf(fp, "%d", &enow);
