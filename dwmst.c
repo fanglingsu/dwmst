@@ -141,8 +141,9 @@ static const char *uptime()
     return buf;
 }
 
-static int volume(void)
+static const char *volume(void)
 {
+    static char buf[6];
     long max = 0, min = 0, vol = 0;
     int mute = 0, volume;
 
@@ -159,14 +160,11 @@ static int volume(void)
     snd_mixer_selem_id_malloc(&mute_info);
     snd_mixer_selem_id_set_name(mute_info, "Master");
     mas_mixer = snd_mixer_find_selem(handle, mute_info);
-    if (!mas_mixer) {
-        return 0;
-    }
-    snd_mixer_selem_get_playback_switch(mas_mixer, SND_MIXER_SCHN_MONO, &mute);
-
-    if (mute) {
+    if (mas_mixer) {
         snd_mixer_selem_id_t *vol_info;
         snd_mixer_elem_t *pcm_mixer;
+
+        snd_mixer_selem_get_playback_switch(mas_mixer, SND_MIXER_SCHN_MONO, &mute);
         snd_mixer_selem_id_malloc(&vol_info);
         snd_mixer_selem_id_set_name(vol_info, "Master");
         pcm_mixer = snd_mixer_find_selem(handle, vol_info);
@@ -176,8 +174,11 @@ static int volume(void)
         volume = (int)vol * 100 / (int)max;
 
         snd_mixer_selem_id_free(vol_info);
+
+        snprintf(buf, sizeof(buf), "%c%d%%", mute ? WHITE : RED, volume);
     } else {
-        volume = 0;
+        buf[0] = '-';
+        buf[1] = '\0';
     }
 
     if (mute_info) {
@@ -186,7 +187,8 @@ static int volume(void)
     if (handle) {
         snd_mixer_close(handle);
     }
-    return volume;
+
+    return buf;
 }
 
 int main(void)
@@ -210,7 +212,7 @@ int main(void)
 
     while (1) {
         snprintf(status, len,
-                "%s %cC%c%s %c♡%s %c±%c%s %c♫%c%d%% %s",
+                "%s %cC%c%s %c♡%s %c±%c%s %c♫%c%s %s",
                 uptime(),
                 GREY, WHITE, cpuusage(),
                 WHITE, loadavg(),
