@@ -18,7 +18,7 @@
 
 static const char *battery(void)
 {
-    static char buf[6], col = '\02';
+    static char buf[7], col = '\02';
     static float percent;
     static int c = 0;
     char st, s = '?';
@@ -61,7 +61,7 @@ static const char *battery(void)
         }
     }
 
-    snprintf(buf, sizeof(buf), "%c%c%.0f%%", s, col, percent);
+    snprintf(buf, sizeof(buf), "%c%c%.0f%%%c", s, col, percent, WHITE);
     return buf;
 }
 
@@ -113,27 +113,6 @@ static const char *loadavg(void)
         buf[0] = '\0';
     } else {
         snprintf(buf, sizeof(buf), "%c%.2f", WHITE, avgs[0]);
-    }
-
-    return buf;
-}
-
-static const char *uptime()
-{
-    static char buf[10];
-    static int c = 0;
-
-    /* Get uptime only all x seconds. */
-    if (--c <= 0) {
-        float h;
-        struct sysinfo info;
-
-        sysinfo(&info);
-        h = info.uptime / 3600.;
-        /* Round to quoarters or an hour. */
-        snprintf(buf, sizeof(buf), "%c%.1fh", h > 8 ? RED : WHITE, h);
-        /* Do uptime check only all x runs. */
-        c = 60;
     }
 
     return buf;
@@ -210,12 +189,11 @@ int main(void)
 
     while (1) {
         snprintf(status, len,
-                "%s %cC%c%s %c♡%s %c±%c%s %c♫%c%s %c%s",
-                uptime(),
-                GREY, WHITE, cpuusage(),
-                WHITE, loadavg(),
-                GREY, WHITE, battery(),
-                GREY, WHITE, volume(),
+                "%cc:%s ♡%s ±%s ♫%s %c%s",
+                WHITE, cpuusage(),
+                loadavg(),
+                battery(),
+                volume(),
                 BLUE, date_time());
 
         XStoreName(display, root, status);
