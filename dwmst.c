@@ -61,7 +61,7 @@ static const char *battery(void)
         }
     }
 
-    snprintf(buf, sizeof(buf), "%c%c%.0f%%%c", s, col, percent, WHITE);
+    snprintf(buf, sizeof(buf), "%c%c%.0f%%", s, col, percent);
     return buf;
 }
 
@@ -189,10 +189,11 @@ int main(void)
 
     while (1) {
         snprintf(status, len,
-                "%cc:%s ♡%s ±%s ♫%s %c%s",
+                "%cc:%s ♡%s ±%s %c♫%s %c%s",
                 WHITE, cpuusage(),
                 loadavg(),
                 battery(),
+                WHITE,
                 volume(),
                 BLUE, date_time());
 
