@@ -1,11 +1,12 @@
+#include <X11/Xlib.h>
 #include <alsa/asoundlib.h>
 #include <ctype.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/sysinfo.h>
 #include <time.h>
 #include <unistd.h>
-#include <X11/Xlib.h>
 
 #define BATT_PERCENT "/sys/class/power_supply/BAT0/capacity"
 #define BATT_STATUS  "/sys/class/power_supply/BAT0/status"
@@ -14,6 +15,8 @@
 #define WHITE '\02'
 #define RED   '\03'
 #define BLUE  '\04'
+
+static unsigned short int done;
 
 static const char *battery(void)
 {
@@ -96,6 +99,16 @@ static const char *date_time(void)
     return buf;
 }
 
+static void die(const char *errstr, ...)
+{
+    va_list ap;
+
+    va_start(ap, errstr);
+    vfprintf(stderr, errstr, ap);
+    va_end(ap);
+    exit(1);
+}
+
 static const char *loadavg(void)
 {
     static char buf[10];
@@ -108,6 +121,11 @@ static const char *loadavg(void)
     }
 
     return buf;
+}
+
+static void terminate(const int unused)
+{
+    done = 1;
 }
 
 static const char *volume(void)
@@ -164,25 +182,25 @@ int main(void)
 {
     int len = 200;
     char *status;
-#ifndef NOX
-    Display *display;
-    Window root;
-#endif
+
+    if (signal(SIGTERM, terminate) == SIG_ERR) {
+        die("Can't install SIGHUP handler");
+    }
 
     if ((status = malloc(sizeof(char) * len)) == NULL) {
-        fprintf(stderr, "Cannot allocate memory.\n");
-        return 1;
+        die("Cannot allocate memory.\n");
     }
 
 #ifndef NOX
+    Display *display;
+    Window root;
     if ((display = XOpenDisplay(NULL)) == NULL ) {
-        fprintf(stderr, "Cannot open display!\n");
-        return 1;
+        die("Cannot open display!\n");
     }
     root = DefaultRootWindow(display);
 #endif
 
-    while (1) {
+    while (!done) {
         snprintf(status, len,
                 "%cc:%s ♡%s ±%s %c♫%s %c%s",
                 WHITE, cpuusage(),
@@ -202,7 +220,6 @@ int main(void)
     }
 
 #ifndef NOX
-    /* Never reached code. */
     free(status);
     XCloseDisplay(display);
 #endif
