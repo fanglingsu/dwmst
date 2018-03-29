@@ -7,9 +7,8 @@
 #include <unistd.h>
 #include <X11/Xlib.h>
 
-#define BATT_NOW    "/sys/class/power_supply/BAT0/energy_now"
-#define BATT_FULL   "/sys/class/power_supply/BAT0/energy_full"
-#define BATT_STATUS "/sys/class/power_supply/BAT0/status"
+#define BATT_PERCENT "/sys/class/power_supply/BAT0/capacity"
+#define BATT_STATUS  "/sys/class/power_supply/BAT0/status"
 
 #define GREY  '\01'
 #define WHITE '\02'
@@ -19,26 +18,19 @@
 static const char *battery(void)
 {
     static char buf[7], col = '\02';
-    static float percent;
+    static int percent = 0;
     static int c = 0;
     char st, s = '?';
     FILE *fp;
 
     if (--c <= 0) {
-        int enow = 1, efull = 1;
-
-        if ((fp = fopen(BATT_NOW, "r"))) {
-            fscanf(fp, "%d", &enow);
-            fclose(fp);
-        }
-        if ((fp = fopen(BATT_FULL, "r"))) {
-            fscanf(fp, "%d", &efull);
+        if ((fp = fopen(BATT_PERCENT, "r"))) {
+            fscanf(fp, "%i", &percent);
             fclose(fp);
         }
 
-        percent = 100 * ((float)enow / efull);
         /* Determine the color of the percent value. */
-        if (percent >= 70.) {
+        if (percent >= 70) {
             col = '\05';
         } else if (percent <= 10) {
             col = '\03';
@@ -61,7 +53,7 @@ static const char *battery(void)
         }
     }
 
-    snprintf(buf, sizeof(buf), "%c%c%.0f%%", s, col, percent);
+    snprintf(buf, sizeof(buf), "%c%c%i%%", s, col, percent);
     return buf;
 }
 
