@@ -7,7 +7,6 @@ CFLAGS += -Os -s -pedantic -Wall -std=c99 -D_DEFAULT_SOURCE
 
 $(PROG): dwmst.c
 	$(CC) $(CFLAGS) $(LIBS) -o $@ $<
-	strip $@
 
 install:
 	install -Dm755 $(PROG) $(DESTDIR)$(BINPREFIX)/$(PROG)
