@@ -20,7 +20,7 @@ static const char *battery(void)
     static char buf[7], col = '\02';
     static int percent = 0;
     static int c = 0;
-    char st, s = '?';
+    char st, s = ' ';
     FILE *fp;
 
     if (--c <= 0) {
@@ -163,21 +163,24 @@ static const char *volume(void)
 int main(void)
 {
     int len = 200;
+    char *status;
+#ifndef NOX
     Display *display;
     Window root;
-
-    char *status;
-
-    if ((display = XOpenDisplay(NULL)) == NULL ) {
-        fprintf(stderr, "Cannot open display!\n");
-        return 1;
-    }
-    root = DefaultRootWindow(display);
+#endif
 
     if ((status = malloc(sizeof(char) * len)) == NULL) {
         fprintf(stderr, "Cannot allocate memory.\n");
         return 1;
     }
+
+#ifndef NOX
+    if ((display = XOpenDisplay(NULL)) == NULL ) {
+        fprintf(stderr, "Cannot open display!\n");
+        return 1;
+    }
+    root = DefaultRootWindow(display);
+#endif
 
     while (1) {
         snprintf(status, len,
@@ -189,15 +192,20 @@ int main(void)
                 volume(),
                 BLUE, date_time());
 
+#ifndef NOX
         XStoreName(display, root, status);
         XSync(display, 0);
-
+#else
+        fprintf(stdout, "%s\n", status);
+#endif
         sleep(1);
     }
 
+#ifndef NOX
     /* Never reached code. */
     free(status);
     XCloseDisplay(display);
+#endif
 
     return 0;
 }
