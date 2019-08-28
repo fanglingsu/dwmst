@@ -20,7 +20,7 @@ static unsigned short int done;
 
 static const char *battery(void)
 {
-    static char buf[7], col = '\02';
+    static char buf[11], col = '\02';
     static int percent = 0;
     static int c = 0;
     char st, s = ' ';
@@ -56,13 +56,14 @@ static const char *battery(void)
         }
     }
 
-    snprintf(buf, sizeof(buf), "%c%c%i%%", s, col, percent);
+    /*snprintf(buf, sizeof(buf), "%c%c%i%%", s, col, percent);*/
+    snprintf(buf, sizeof(buf), "%c\uF241%c%c%i%%", col, s, WHITE, percent);
     return buf;
 }
 
 static const char *cpuusage()
 {
-    static char buf[7] = {0};
+    static char buf[10] = {0};
     static long double work_save, total_save;
     long double a[8], work, total;
     float loadavg;
@@ -78,7 +79,7 @@ static const char *cpuusage()
         total   = work + a[3] + a[4];
         loadavg = (work - work_save) / (total - total_save);
 
-        snprintf(buf, sizeof(buf), "%.1f%%", loadavg * 100.);
+        snprintf(buf, sizeof(buf), "\uF110%.1f%%", loadavg * 100.);
 
         work_save  = work;
         total_save = total;
@@ -117,7 +118,7 @@ static const char *loadavg(void)
     if (getloadavg(avgs, 1) < 0) {
         buf[0] = '\0';
     } else {
-        snprintf(buf, sizeof(buf), "%c%.2f", WHITE, avgs[0]);
+        snprintf(buf, sizeof(buf), "\uF0AE%.2f", avgs[0]);
     }
 
     return buf;
@@ -130,9 +131,9 @@ static void terminate(const int unused)
 
 static const char *volume(void)
 {
-    static char buf[6];
+    static char buf[10];
     long max = 0, min = 0, vol = 0;
-    int mute = 0, volume;
+    int playing = 0, volume;
 
     snd_mixer_t *handle;
     snd_mixer_elem_t *mas_mixer;
@@ -151,7 +152,7 @@ static const char *volume(void)
         snd_mixer_selem_id_t *vol_info;
         snd_mixer_elem_t *pcm_mixer;
 
-        snd_mixer_selem_get_playback_switch(mas_mixer, SND_MIXER_SCHN_MONO, &mute);
+        snd_mixer_selem_get_playback_switch(mas_mixer, SND_MIXER_SCHN_MONO, &playing);
         snd_mixer_selem_id_malloc(&vol_info);
         snd_mixer_selem_id_set_name(vol_info, "Master");
         pcm_mixer = snd_mixer_find_selem(handle, vol_info);
@@ -162,7 +163,11 @@ static const char *volume(void)
 
         snd_mixer_selem_id_free(vol_info);
 
-        snprintf(buf, sizeof(buf), "%c%d%%", mute ? WHITE : RED, volume);
+        if (playing) {
+            snprintf(buf, sizeof(buf), "%c\uF028%d%%", WHITE, volume);
+        } else {
+            snprintf(buf, sizeof(buf), "%c\uF6A9%c%d%%", RED, WHITE, volume);
+        }
     } else {
         buf[0] = '-';
         buf[1] = '\0';
@@ -202,7 +207,7 @@ int main(void)
 
     while (!done) {
         snprintf(status, len,
-                "%cc:%s ♡%s ±%s %c♫%s %c%s",
+                "%c%s %s %s %c%s %c%s",
                 WHITE, cpuusage(),
                 loadavg(),
                 battery(),
