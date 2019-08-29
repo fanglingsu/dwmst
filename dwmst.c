@@ -52,12 +52,15 @@ static const char *battery(void)
         } else if ('C' == st) {
             s = '+';
         } else if ('F' == st) {
-            s = '=';
+            s = '\0';
         }
     }
 
-    /*snprintf(buf, sizeof(buf), "%c%c%i%%", s, col, percent);*/
-    snprintf(buf, sizeof(buf), "%c\uF241%c%c%i%%", col, s, WHITE, percent);
+    if (s) {
+        snprintf(buf, sizeof(buf), "%c\uF241%c%c%i%%", col, s, WHITE, percent);
+    } else {
+        snprintf(buf, sizeof(buf), "%c\uF241%c%i%%", col, WHITE, percent);
+    }
     return buf;
 }
 
