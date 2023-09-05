@@ -211,12 +211,11 @@ int main(void)
     while (!done) {
         snprintf(status, len,
                 "%c%s %s %s %c%s %c%s",
-                WHITE, cpuusage(),
-                loadavg(),
-                battery(),
-                WHITE,
-                volume(),
-                BLUE, date_time());
+                WHITE,	cpuusage(),
+                	loadavg(),
+                	battery(),
+                WHITE,	volume(),
+                BLUE,	date_time());
 
 #ifndef NOX
         XStoreName(display, root, status);
